@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head lang="zh">
+    <meta charset="UTF-8">
+    <title></title>
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="mobile-web-app-capable" content="yes"/>
+    <meta name="apple-touch-fullscreen" content="yes"/>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        .number-board-mask{
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            /*background-color: rgba(232,232,232,0.8);*/
+        }
+        .number-board {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            box-sizing: border-box;
+            border-top: 1px solid #a1a1a1;
+            background-color: #f5f5f5;
+        }
+        .number-title{
+            line-height: 30px;
+            height: 30px;
+            font-size: 16px;
+            background-color: skyblue;
+            padding: 0 13px;
+        }
+        .number-result{
+            line-height: 40px;
+            font-size: 20px;
+            border: 3px groove #a1a1a1;
+            background-color: white;
+            padding: 0 10px;
+        }
+        .number-buttons{
+            line-height: 30px;
+        }
+        .number-buttons li{
+            display: inline-block;
+            width: 33%;
+            text-align: center;
+            padding: 3px;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        .number-buttons a{
+            display: block;
+            text-align: center;
+            background-color: white;
+            color: #333333;
+            text-decoration: none;
+            height: 30px;
+            border: 1px solid #a1a1a1;
+            border-radius: 3px 50% 3px 50%;
+        }
+        .number-buttons.integer a.key-dot{
+            visibility: hidden;
+        }
+        .number-buttons .key-cancel, .number-buttons .key-clear{
+            background-color: bisque;
+        }
+        .number-buttons .key-back{
+            background-color: lightcoral;
+        }
+        .number-buttons .key-confirm {
+            background-color: skyblue;
+        }
+
+
+
+        p{
+            padding: 10px;
+            line-height: 30px;
+        }
+        label{
+            display: inline-block;
+        }
+        input{
+            display: inline-block;
+            width: 200px;
+            height: 28px;
+            border: 1px solid #e6e6e6;
+            border-radius: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<p><label for="value_1">数值1：</label><input type="text" id="value_1" class="number-input" value="2.1" readonly></p>
+<p><label for="value_2">数值2：</label><input type="text" id="value_2" class="number-input" value="100" readonly></p>
+<p><label for="value_3">数值3：</label><input type="text" id="value_3" class="number-input" value="0.3" readonly></p>
+
+
+
+
+<script>
+    var NumberInput = (function () {
+        'use strict';
+
+
+        function extend(target, source) {
+            for (var p in source) {
+                if (source.hasOwnProperty(p)) {
+                    target[p] = source[p];
+                }
+            }
+
+            return target;
+        }
+
+        function createElement(tagName, className, attributes, parentNode){
+            var elem = document.createElement(tagName);
+            var key;
+            if(className){
+                setAttribute(elem, 'class', className);
+            }
+            if(attributes){
+                for(key in attributes){
+                    setAttribute(elem, key, attributes[key]);
+                }
+            }
+            if(parentNode){
+                parentNode.appendChild(elem);
+            }
+            return elem;
+        }
+
+        function setAttribute(elem, name, value) {
+            var attrNode = document.createAttribute(name);
+            attrNode.nodeValue = value;
+            elem.attributes.setNamedItem(attrNode);
+        }
+
+        function thisClass(elem, options) {
+            var defaults = {
+                title: '',
+                className: 'number-board',
+                integer: false
+            };
+            var maskLayer;
+            options = extend(defaults, options);
+            function openKeyBoard() {
+                maskLayer = createElement('div', 'number-board-mask'); //ocument.createElement('div');
+                var box = createElement('div', options.className, null, maskLayer); //document.createElement('div');
+                var body = document.getElementsByTagName('body');
+                var title, resultLine, buttonsWrapper, indexOfButtons,
+                        result = elem.value, buttonCount, button, li, a;
+                var buttons = [
+                    {text: '取消', command: 'cancel', value: ''},
+                    {text: '清空', command: 'clear', value: ''},
+                    {text: '<<<', command: 'back', value: ''},
+                    {text: '1', command: 'number', value: '1'},
+                    {text: '2', command: 'number', value: '2'},
+                    {text: '3', command: 'number', value: '3'},
+                    {text: '4', command: 'number', value: '4'},
+                    {text: '5', command: 'number', value: '5'},
+                    {text: '6', command: 'number', value: '6'},
+                    {text: '7', command: 'number', value: '7'},
+                    {text: '8', command: 'number', value: '8'},
+                    {text: '9', command: 'number', value: '9'},
+                    {text: '.', command: 'dot', value: '.'},
+                    {text: '0', command: 'number', value: '0'},
+                    {text: '确定', command: 'confirm', value: ''}
+                ];
+                buttonCount = buttons.length;
+
+                if (options.title) {
+                    title = createElement('div', 'number-title', null, box);
+                    title.innerHTML = options.title;
+                }
+                resultLine = createElement('div', 'number-result', null, box);
+                resultLine.innerText = result || '0';
+
+
+                buttonsWrapper = document.createElement('ul');
+                if(options.integer){
+                    setAttribute(buttonsWrapper, 'class', 'number-buttons integer');
+                } else {
+                    setAttribute(buttonsWrapper, 'class', 'number-buttons');
+                }
+                
+                box.appendChild(buttonsWrapper);
+
+                for(indexOfButtons = 0; indexOfButtons < buttonCount; indexOfButtons++){
+                    button = buttons[indexOfButtons];
+                    li = document.createElement('li');
+                    a = document.createElement('a');
+                    buttonsWrapper.appendChild(li);
+                    setAttribute(a, 'href', 'javascript:void(0)');
+                    setAttribute(a, 'data-command', button.command);
+                    setAttribute(a, 'data-value', button.value);
+                    setAttribute(a, 'class', 'key-' + button.command);
+                    a.innerText = button.text;
+                    li.appendChild(a);
+                    a.addEventListener('click', buttonHandler, false);
+                }
+
+                function buttonHandler(e){
+                    var command = this.attributes.getNamedItem('data-command').nodeValue;
+                    var value = this.attributes.getNamedItem('data-value').nodeValue;
+                    switch (command){
+                        case 'dot':
+                            if(result.indexOf('.') > -1){
+                                return;
+                            }
+                            result += '.';
+                            resultLine.innerText = result;
+                            break;
+                        case 'number':
+                                if(result === '0'){
+                                    result = value;
+                                } else {
+                                    result += value;
+                                }
+                                resultLine.innerText = result;
+                            break;
+                        case 'clear':
+                            result = '0';
+                            resultLine.innerText = result;
+                            break;
+                        case 'cancel':
+                            closeKeyboard();
+                            break;
+                        case 'back':
+                            if(result.length === 1){
+                                result = '0';
+                            } else {
+                                result = result.substring(0, result.length - 1);
+                            }
+                            resultLine.innerText = result;
+                            break;
+                        case 'confirm':
+                            elem.value = Number(result);
+                            closeKeyboard();
+                            break;
+                        default:
+                            break;
+                    }
+
+                    resultLine.innerText = result || '0';
+                }
+
+                body[0].appendChild(maskLayer);
+                maskLayer.addEventListener('click', maskClickHandler, false);
+            }
+
+            function closeKeyboard(){
+                if(maskLayer){
+                    maskLayer.parentNode.removeChild(maskLayer);
+                }
+            }
+
+            function maskClickHandler(e){
+                if(e.target === e.currentTarget){
+                    closeKeyboard();
+                }
+            }
+
+
+            elem.addEventListener('focus', openKeyBoard, false);
+//            elem.addEventListener('blur', closeKeyboard, false);
+        }
+
+
+        return thisClass;
+    })();
+
+    new NumberInput(document.getElementsByClassName('number-input')[0], {title: '请输入数值1:'});
+    new NumberInput(document.getElementsByClassName('number-input')[1], {title: '请输入数值2:', integer: true});
+    new NumberInput(document.getElementsByClassName('number-input')[2], {title: '请输入数值3:'});
+</script>
+
+</body>
+</html>
