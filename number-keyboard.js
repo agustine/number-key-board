@@ -52,7 +52,6 @@ var NumberInput = (function () {
         var body = document.getElementsByTagName('body')[0];
         options = extend(defaults, options);
         function openKeyBoard() {
-            console.log('open keyboard');
             maskLayer = createElement('div', 'number-board-mask'); //ocument.createElement('div');
             var box = createElement('div', options.className, null, maskLayer); //document.createElement('div');
             var title, resultLine, buttonsWrapper, indexOfButtons,
@@ -99,8 +98,8 @@ var NumberInput = (function () {
             }
 
             function buttonHandler(e){
-                var command = this.attributes.getNamedItem('data-command').nodeValue;
-                var value = this.attributes.getNamedItem('data-value').nodeValue;
+                var command = e.currentTarget.attributes.getNamedItem('data-command').nodeValue;
+                var value = e.currentTarget.attributes.getNamedItem('data-value').nodeValue;
                 switch (command){
                     case 'dot':
                         if(result.indexOf('.') > -1){
@@ -125,7 +124,7 @@ var NumberInput = (function () {
                         resultLine.innerText = result;
                         break;
                     case 'cancel':
-                        options.canceled && options.canceled(result);
+                        if(options.canceled) options.canceled(result);
                         closeKeyboard();
                         break;
                     case 'back':
@@ -138,7 +137,7 @@ var NumberInput = (function () {
                         break;
                     case 'confirm':
                         elem.value = Number(result);
-                        options.confirmed && options.confirmed(Number(result));
+                        if(options.confirmed) options.confirmed(Number(result));
                         closeKeyboard();
                         break;
                     default:
@@ -160,6 +159,7 @@ var NumberInput = (function () {
 
         function maskClickHandler(e){
             if(e.target === e.currentTarget){
+                if(options.canceled) options.canceled();
                 closeKeyboard();
             }
         }

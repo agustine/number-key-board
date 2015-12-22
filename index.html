@@ -106,7 +106,7 @@
 
 <script src="number-keyboard.js"></script>
 <script>
-    new NumberInput(document.getElementsByClassName('number-input')[0], {title: '请输入数值1:', canceled: function(result){ console.log('当前取消的值为' + result); }});
+    new NumberInput(document.getElementsByClassName('number-input')[0], {title: '请输入数值1:', canceled: function(){ console.log('取消...'); }});
     new NumberInput(document.getElementsByClassName('number-input')[1], {title: '请输入数值2:', integer: true, confirmed: function(result){ console.log('当前确认的值为' + result); }});
     new NumberInput(document.getElementsByClassName('number-input')[2], {title: '请输入数值3:'});
 </script>
