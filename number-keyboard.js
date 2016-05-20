@@ -1,5 +1,40 @@
 /**
- * Created by Ronnie on 15/12/21.
+ * Created by Ronnie(agustine103@gmail.com) on 15/12/21.
+ *
+ *                            _ooOoo_
+ *                           o8888888o
+ *                           88" . "88
+ *                           (| -_- |)
+ *                            O\ = /O
+ *                        ____/`---'\____
+ *                      .   ' \\| |// `.
+ *                       / \\||| : |||// \
+ *                     / _||||| -:- |||||- \
+ *                       | | \\\ - /// | |
+ *                     | \_| ''\---/'' | |
+ *                      \ .-\__ `-` ___/-. /
+ *                   ___`. .' /--.--\ `. . __
+ *                ."" '< `.___\_<|>_/___.' >'"".
+ *               | | : `- \`.;`\ _ /`;.`/ - ` : | |
+ *                 \ \ `-. \_ __\ /__ _/ .-` / /
+ *         ======`-.____`-.___\_____/___.-`____.-'======
+ *                            `=---='
+ *
+ *         .............................................
+ *                  佛祖保佑             永无BUG
+ *          佛曰:
+ *                  写字楼里写字间，写字间里程序员；
+ *                  程序人员写程序，又拿程序换酒钱。
+ *                  酒醒只在网上坐，酒醉还来网下眠；
+ *                  酒醉酒醒日复日，网上网下年复年。
+ *                  但愿老死电脑间，不愿鞠躬老板前；
+ *                  奔驰宝马贵者趣，公交自行程序员。
+ *                  别人笑我忒疯癫，我笑自己命太贱；
+ *                  不见满街漂亮妹，哪个归得程序员？
+ *
+ *
+ * Number keyboard for mobile, <input type="number" > not support on mobile browser
+ *
  */
 var NumberInput = (function () {
     'use strict';
@@ -45,17 +80,35 @@ var NumberInput = (function () {
             title: '',
             className: 'number-board',
             integer: false,
+            unitName: '',
+            round: 0,
             confirmed: noop,
             canceled: noop
         };
         var maskLayer;
         var body = document.getElementsByTagName('body')[0];
+        var isInput = elem.tagName.toLowerCase() === 'input';
         options = extend(defaults, options);
+
+        function getOriginValue(){
+            var result = isInput ? elem.value : elem.innerHTML;
+            result = result || '0';
+            return result
+        }
+
+        function setNewValue(value){
+            if(isInput){
+                elem.value = value;
+            } else {
+                elem.innerText = value;
+            }
+        }
+
         function openKeyBoard() {
             maskLayer = createElement('div', 'number-board-mask'); //ocument.createElement('div');
             var box = createElement('div', options.className, null, maskLayer); //document.createElement('div');
-            var title, resultLine, buttonsWrapper, indexOfButtons,
-                result = elem.value, buttonCount, button, li, a;
+            var title, resultLine, resultSpan, unit, buttonsWrapper, indexOfButtons,
+                result = getOriginValue(), buttonCount, button, li, a;
             var buttons = [
                 {text: '取消', command: 'cancel', value: ''},
                 {text: '清空', command: 'clear', value: ''},
@@ -73,6 +126,11 @@ var NumberInput = (function () {
                 {text: '0', command: 'number', value: '0'},
                 {text: '确定', command: 'confirm', value: ''}
             ];
+
+            //if(options.nullable && !result){
+            //
+            //}
+
             buttonCount = buttons.length;
 
             if (options.title) {
@@ -80,8 +138,14 @@ var NumberInput = (function () {
                 title.innerHTML = options.title;
             }
             resultLine = createElement('div', 'number-result', null, box);
-            resultLine.innerText = result || '0';
 
+            resultSpan = createElement('span', '', null, resultLine);
+            resultSpan.innerText = result || '0';
+
+            if(options.unitName){
+                unit = createElement('span', 'number-result-unit', null, resultLine);
+                unit.innerText = options.unitName;
+            }
 
             buttonsWrapper = createElement('ul', options.integer ? 'number-buttons integer': 'number-buttons', null, box);
 
@@ -94,12 +158,13 @@ var NumberInput = (function () {
                     'data-value': button.value
                 }, li);
                 a.innerText = button.text;
-                a.addEventListener('click', buttonHandler, false);
+                a.addEventListener('touchstart', buttonHandler, false);
             }
 
             function buttonHandler(e){
                 var command = e.currentTarget.attributes.getNamedItem('data-command').nodeValue;
                 var value = e.currentTarget.attributes.getNamedItem('data-value').nodeValue;
+                var splitedNumber;
                 switch (command){
                     case 'dot':
                         if(result.indexOf('.') > -1){
@@ -109,19 +174,25 @@ var NumberInput = (function () {
                             return;
                         }
                         result += '.';
-                        resultLine.innerText = result;
+                        resultSpan.innerText = result;
                         break;
                     case 'number':
+                        if(!options.integer && options.round){
+                            splitedNumber = result.split('.');
+                            if(splitedNumber[1] && splitedNumber[1].length >= options.round){
+                                break;
+                            }
+                        }
                         if(result === '0'){
                             result = value;
                         } else {
                             result += value;
                         }
-                        resultLine.innerText = result;
+                        resultSpan.innerText = result;
                         break;
                     case 'clear':
                         result = '0';
-                        resultLine.innerText = result;
+                        resultSpan.innerText = result;
                         break;
                     case 'cancel':
                         if(options.canceled) options.canceled(result);
@@ -133,10 +204,16 @@ var NumberInput = (function () {
                         } else {
                             result = result.substring(0, result.length - 1);
                         }
-                        resultLine.innerText = result;
+                        resultSpan.innerText = result;
                         break;
                     case 'confirm':
-                        elem.value = Number(result);
+                        setNewValue(Number(result));
+                        //if(elem.value){
+                        //    elem.value = Number(result);
+                        //} else {
+                        //    elem.innerHTML = Number(result);
+                        //}
+
                         if(options.confirmed) options.confirmed(Number(result));
                         closeKeyboard();
                         break;
@@ -144,7 +221,7 @@ var NumberInput = (function () {
                         break;
                 }
 
-                resultLine.innerText = result || '0';
+                resultSpan.innerText = result || '0';
             }
 
             body.appendChild(maskLayer);
